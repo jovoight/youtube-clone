@@ -27,8 +27,10 @@ export const processVid = (rawVidName: string, processedVidName: string) => {
         console.log('Video Processed Successfully');
         resolve();
       })
-      .on("error", (e) => {
+      .on("error", (e, stdout, stderr) => {
         console.log(`Error Processing Video: ${e.message}`);
+        console.log(`ffmpeg output: ${stdout}`);
+        console.log(`ffmpeg stderr: ${stderr}`);
         reject(e);
       })
       .save(`${processedDir}/${processedVidName}`);

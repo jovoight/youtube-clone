@@ -1,5 +1,5 @@
 import express from "express";
-import { deleteFile, deleteProcessed, deleteRaw, downloadRawVid, processVid, setupDirs, uploadProcessedVid } from "./storage";
+import { deleteProcessed, deleteRaw, downloadRawVid, processVid, setupDirs, uploadProcessedVid } from "./storage";
 
 setupDirs();
 const app = express();
