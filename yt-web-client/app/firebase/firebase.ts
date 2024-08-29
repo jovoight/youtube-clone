@@ -15,12 +15,10 @@ const firebaseConfig = {
   authDomain: "yt-clone-4249d.firebaseapp.com",
   projectId: "yt-clone-4249d",
   appId: "1:290092083760:web:129c850412a908d2b85bf5",
-  measurementId: "G-GGPWLK2QN3"
 };
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
-const analytics = getAnalytics(app);
 
 /**
  * Signs the user in with a Google popup.
