@@ -8,6 +8,7 @@ import styles from './navbar.module.css';
 import Link from 'next/link';
 import SignIn from './sign-in';
 import { onAuthStateChangedHelper } from '../firebase/firebase';
+import Upload from './upload';
 
 const Navbar = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -25,6 +26,7 @@ const Navbar = () => {
       <Link href='/'>
         <Image src="/youtube-logo.svg" alt="YouTube Logo" width={90} height={20} />
       </Link>
+      {user && <Upload />}
       <SignIn user={user} />
     </nav>
   );
