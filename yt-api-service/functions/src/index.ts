@@ -11,6 +11,16 @@ const firestore = new Firestore();
 const storage = new Storage();
 
 const rawBucketName = "jv-yt-raw-vids";
+const videoCollectionId = "videos";
+
+export interface Video {
+  id?: string;
+  uid?: string;
+  filename?: string;
+  status?: "processing" | "processed";
+  title?: string;
+  description?: string;
+}
 
 export const createUser = functions.auth.user().onCreate((user) => {
   const userInfo = {
@@ -43,4 +53,12 @@ export const generateUploadUrl = onCall({maxInstances: 1}, async (request) => {
     expires: Date.now() + 15 * 60 * 1000, // 15 minutes
   });
   return {url, fileName};
+});
+
+export const getVideos = onCall({maxInstances: 1}, async () => {
+  const snapshot = await firestore
+    .collection(videoCollectionId)
+    .limit(10)
+    .get();
+  return snapshot.docs.map((doc) => doc.data());
 });
