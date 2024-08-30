@@ -42,6 +42,9 @@ app.post('/process-vid', async (req, res) => {
       deleteRaw(inputFile),
       deleteProcessed(outputFile)
     ]);
+    await setVideo(videoId, {
+      status: undefined
+    });
     console.error(e);
     return res.status(500).send('Internal Server Error: Video Processing Failed.');
   }
