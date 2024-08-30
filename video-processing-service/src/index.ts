@@ -1,67 +1,31 @@
-import express from "express";
-import { deleteProcessed, deleteRaw, downloadRawVid, processVid, setupDirs, uploadProcessedVid } from "./storage";
-import { isVideoNew, setVideo } from "./firestore";
+const projectId = 'yt-clone-4249d';
+const subscriptionId = 'video-uploads-subscription';
 
-setupDirs();
-const app = express();
-app.use(express.json());
+// Imports the Google Cloud client library
+import {PubSub, Message} from '@google-cloud/pubsub';
+import { processVideoFromMessage } from './process';
 
-app.post('/process-vid', async (req, res) => {
-  // Get bucket and file names from Cloud Pub/Sub message
-  let data;
-  try {
-    const message = Buffer.from(req.body.message.data, 'base64').toString('utf8');
-    data = JSON.parse(message);
-    if (!data.name) {
-      throw new Error('Invalid Message Payload.');
-    }
-  } catch (e) {
-    console.error(e);
-    return res.status(400).send('Bad Request: Missing Filename.');
-  }
-  const inputFile = data.name; // Format of <UID>-<DATE>.<EXT>
-  const outputFile = `processed-${inputFile}`;
-  const videoId = inputFile.split('.')[0];
-  const videoIsNew = await isVideoNew(videoId);
-  if (!videoIsNew) {
-    return res.status(400).send('Bad Request: Video Already Processing or Processed.');
-  } else {
-    await setVideo(videoId, {
-      id: videoId,
-      uid: videoId.split('-')[0],
-      status: 'processing',
-    });
-  }
-  // Download raw video from cloud storage
-  await downloadRawVid(inputFile);
-  // Process the video
-  try {
-    await processVid(inputFile, outputFile);
-  } catch (e) {
-    await Promise.all([
-      deleteRaw(inputFile),
-      deleteProcessed(outputFile)
-    ]);
-    await setVideo(videoId, {
-      status: undefined
-    });
-    console.error(e);
-    return res.status(500).send('Internal Server Error: Video Processing Failed.');
-  }
-  // Upload the processed video to cloud storage
-  await uploadProcessedVid(outputFile);
-  await setVideo(videoId, {
-    status: 'processed',
-    filename: outputFile
-  });
-  await Promise.all([
-    deleteRaw(inputFile),
-    deleteProcessed(outputFile)
-  ]);
-  return res.status(200).send('Processing Finished Successfully.');
-});
+// Instantiate the client
+const pubSubClient = new PubSub({projectId});
 
-const port = process.env.PORT || 3000;
-app.listen(port, () => {
-  console.log(`Server is running at http://localhost:${port}`);
-});
+const listenForMessages = () => {
+  // Instantiate the subscription
+  const subscription = pubSubClient.subscription(subscriptionId);
+  console.log(`Listening for messages on ${subscriptionId}`);
+  // Create an event handler to handle messages
+  let messageCount = 0;
+  const messageHandler = (message: Message) => {
+    console.log(`Received message ${message.id}:`);
+    console.log(`\tData: ${message.data}`);
+    console.log(`\tAttributes: ${message.attributes}`);
+    messageCount += 1;
+    // Process the video
+    processVideoFromMessage(message);
+    // "Ack" (acknowledge receipt of) the message
+    message.ack();
+  };
+  // Listen for new messages
+  subscription.on('message', messageHandler);
+}
+// Listen for messages (set timeout to 23hr, run every 24hr at 3AM on Cloud Scheduler)
+listenForMessages();
