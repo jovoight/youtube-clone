@@ -22,7 +22,7 @@ export const setupDirs = () => {
 export const processVid = (rawVidName: string, processedVidName: string) => {
   return new Promise<void>((resolve, reject) => {
     ffmpeg(`${rawDir}/${rawVidName}`)
-      .outputOptions("-vf", "scale=-1:360") // Convert to 360p
+      .outputOptions("-vf", "scale=-2:360") // Convert to 360p
       .on("end", () => {
         console.log('Video Processed Successfully');
         resolve();
